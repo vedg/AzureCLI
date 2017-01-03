@@ -1,0 +1,191 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"databaseAccountName": {
+			"type": "string"
+		},
+		"locationName1": {
+			"type": "string"
+		},
+		"locationName2": {
+			"type": "string"
+		},
+		"webAppName": {
+			"type": "string",
+			"metadata": {
+				"description": "The WebApp service name "
+			}
+		},
+		"hostingPlanName": {
+			"type": "string",
+			"metadata": {
+				"description": "The name of the App Service plan to use for hosting the web app."
+			}
+		},
+		"appServicePlanSku": {
+			"type": "string",
+			"allowedValues": [
+				"F1",
+				"D1",
+				"B1",
+				"B2",
+				"B3",
+				"S1",
+				"S2",
+				"S3",
+				"P1",
+				"P2",
+				"P3",
+				"P4"
+			],
+			"defaultValue": "S1",
+			"metadata": {
+				"description": "The pricing tier for the hosting plan."
+			}
+		},
+		"workerSize": {
+			"type": "string",
+			"allowedValues": [
+				"0",
+				"1",
+				"2"
+			],
+			"defaultValue": "0",
+			"metadata": {
+				"description": "The instance size of the hosting plan (small, medium, or large)."
+			}
+		},
+		"repoURL": {
+			"type": "string",
+			"defaultValue": "https://github.com/davidebbo-test/Mvc52Application.git",
+			"metadata": {
+				"description": "The URL for the Git repository that contains the project to deploy."
+			}
+		},
+		"branch": {
+			"type": "string",
+			"defaultValue": "master",
+			"metadata": {
+				"description": "The branch of the GitHub repository to use."
+			}
+		},
+		"apiManagementServiceName": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "The name of the API Management service"
+			}
+		},
+		"publisherEmail": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "The email address of the owner of the service"
+			}
+		},
+		"publisherName": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "The name of the owner of the service"
+			}
+		},
+		"apiManagementSku": {
+			"type": "string",
+			"allowedValues": [
+				"Developer",
+				"Standard",
+				"Premium"
+			],
+			"defaultValue": "Developer",
+			"metadata": {
+				"description": "The pricing tier of this API Management service"
+			}
+		},
+		"apiManagementSkuCount": {
+			"type": "string",
+			"allowedValues": [
+				"1",
+				"2"
+			],
+			"defaultValue": "1",
+			"metadata": {
+				"description": "The instance size of this API Management service."
+			}
+		}
+	},
+	"resources": [{
+		"apiVersion": "2015-04-08",
+		"type": "Microsoft.DocumentDb/databaseAccounts",
+		"name": "[parameters('databaseAccountName')]",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"databaseAccountOfferType": "Standard",
+			"ipRangeFilter": "",
+			"locations": [{
+				"failoverPriority": 0,
+				"locationName": "[parameters('locationName1')]"
+			}, {
+				"failoverPriority": 1,
+				"locationName": "[parameters('locationName2')]"
+			}]
+		}
+	}, {
+		"apiVersion": "2015-08-01",
+		"name": "[parameters('hostingPlanName')]",
+		"type": "Microsoft.Web/serverfarms",
+		"location": "[resourceGroup().location]",
+		"dependsOn": [
+			"[resourceId('Microsoft.DocumentDb/databaseAccounts', parameters('databaseAccountName'))]"
+		],
+		"sku": {
+			"name": "[parameters('appServicePlanSku')]",
+			"capacity": "[parameters('workerSize')]"
+		},
+		"properties": {
+			"name": "[parameters('hostingPlanName')]"
+		}
+	}, {
+		"apiVersion": "2015-08-01",
+		"name": "[parameters('webAppName')]",
+		"type": "Microsoft.Web/sites",
+		"location": "[resourceGroup().location]",
+		"dependsOn": [
+			"[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+		],
+		"properties": {
+			"serverFarmId": "[parameters('hostingPlanName')]"
+		},
+		"resources": [{
+			"apiVersion": "2015-08-01",
+			"name": "web",
+			"type": "sourcecontrols",
+			"dependsOn": [
+				"[resourceId('Microsoft.Web/Sites', parameters('webAppName'))]"
+			],
+			"properties": {
+				"RepoUrl": "[parameters('repoURL')]",
+				"branch": "[parameters('branch')]",
+				"IsManualIntegration": true
+			}
+		}]
+	}, {
+		"apiVersion": "2014-02-14",
+		"name": "[parameters('apiManagementServiceName')]",
+		"type": "Microsoft.ApiManagement/service",
+		"location": "West US",
+		"tags": {},
+		"dependsOn": [
+			"[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+		],
+		"properties": {
+			"sku": {
+				"name": "[parameters('apiManagementSku')]",
+				"capacity": "[parameters('apiManagementSkuCount')]"
+			},
+			"publisherEmail": "[parameters('publisherEmail')]",
+			"publisherName": "[parameters('publisherName')]"
+		}
+	}]
+}

@@ -1,0 +1,39 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"databaseAccountName": {
+			"value": "sampledocdbaccount2"
+		},
+		"locationName1": {
+			"value": "southindia"
+		},
+		"locationName2": {
+			"value": "eastus"
+		},
+		"webAppName": {
+			"value": "testASPNet2"
+		},
+		"hostingPlanName": {
+			"value": "testAppServicePlan2"
+		},
+		"appServicePlanSku": {
+			"value": "F1"
+		},
+		"repoURL": {
+			"value": "https://github.com/davidebbo-test/Mvc52Application.git"
+		},
+		"branch": {
+			"value": "master"
+		},
+		"apiManagementServiceName": {
+		    "value" : "testapimanagement2"
+		},
+		"publisherEmail": {
+			"value": "shsrin@microsoft.com"
+		},
+		"publisherName": {
+			"value": "shsrin"
+		}
+	}
+}
